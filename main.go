@@ -3,17 +3,15 @@ package main
 import (
 	"bytes"
 	"crypto/tls"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"math/rand"
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
-	"github.com/brianvoe/gofakeit/v4"
+	"github.com/brianvoe/gofakeit/v6"
 	"github.com/prometheus/common/log"
 )
 
@@ -57,18 +55,15 @@ func job(datas *jobLoop) string {
 	for i := 0; i < loopCount; i++ {
 		err := sendRequest(datas.datas, datas.dataCount, datas.url)
 		if err != nil {
-			log.Errorln(err)
+			log.Errorln("Error!!! ", err)
 		}
 	}
 	return "End"
 }
 
 type request struct {
-	Subject string   `json:"subject"`
-	Prs     []string `json:"prs"`
-	Urls    []string `json:"urls"`
-	Froms   []string `json:"froms"`
-	Sdrip   string   `json:"sdrip"`
+	Pid    string `json:"pid"`
+	Passwd string `json:"passwd"`
 }
 
 func dataGenerator(dataCount int) [][]byte {
@@ -77,19 +72,9 @@ func dataGenerator(dataCount int) [][]byte {
 	gofakeit.Seed(time)
 	var data [][]byte
 	for i := 0; i < dataCount; i++ {
-		froms := strings.Join(
-			[]string{
-				gofakeit.Name(),
-				" <",
-				gofakeit.Email(),
-				">",
-			}, "")
 		req := &request{
-			Subject: "WW91ciBhY2NvdW50IGhhcyBiZWVuIGJsb2NrZWQ=",
-			Prs:     []string{"8869" + strconv.FormatInt(1000000000000000+rand.Int63n(99999999999999), 10)},
-			Urls:    []string{base64.StdEncoding.EncodeToString([]byte(gofakeit.URL()))},
-			Froms:   []string{base64.StdEncoding.EncodeToString([]byte(froms))},
-			Sdrip:   gofakeit.IPv4Address(),
+			Pid:    "WW91ciBhY2NvdW50IGhhcyBiZWVuIGJsb2NrZWQ=",
+			Passwd: "WW91ciBhY2NvdW50IGhhcyBiZWVuIGJsb2NrZWQ=",
 		}
 		reqJSON, err := json.Marshal(req)
 		if err != nil {
@@ -135,7 +120,6 @@ func getConfig() (int, int, int, string) {
 	url := os.Getenv("REQUEST_URL")
 	if url == "" {
 		log.Errorf("REQUEST_URL cannt be empty.")
-		return
 	}
 	return dataCount, threadCount, loopCount, url
 }
